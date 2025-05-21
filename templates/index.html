@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Event Discovery</title>
+</head>
+<body>
+    <h1>Search for Events</h1>
+    <h2>Total Cart Value: $<span id="cartTotal">0</span></h2>
+    <form method="GET">
+        <input type="text" name="category" placeholder="Category">
+        <input type="text" name="date" placeholder="YYYY-MM-DDTHH:MM:SSZ">
+        <input type="text" name="address" placeholder="Address">
+        <input type="text" name="keyword" placeholder="Keyword (required)">
+        <button type="submit">Search</button>
+    </form>
+
+    <h2>Results:</h2>
+    <ul>
+    {% for event in events %}
+    <li>
+        <a href="{{ event.url }}" target="_blank">{{ event.name }}</a><br>
+        <strong>Address:</strong> {{ event.address }}<br>
+        <strong>Description:</strong> {{ event.description }}<br>
+        {% if event.price %}
+        <strong>Price:</strong> {{ event.price }}
+        <button onclick="addToCart('{{ event.price }}')">+</button>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+
+<script>
+    let total = 0;
+
+    function addToCart(price) {
+        // Remove $ sign if it's there and convert to float
+        const numeric = parseFloat(price.replace("$", ""));
+        if (!isNaN(numeric)) {
+            total += numeric;
+            document.getElementById("cartTotal").textContent = total.toFixed(2);
+        }
+    }
+</script>
+
+
+</body>
+</html>
