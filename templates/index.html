@@ -5,7 +5,6 @@
 </head>
 <body>
     <h1>Search for Events</h1>
-    <h2>Total Cart Value: $<span id="cartTotal">0</span></h2>
     <form method="GET">
         <input type="text" name="category" placeholder="Category">
         <input type="text" name="date" placeholder="YYYY-MM-DDTHH:MM:SSZ">
@@ -14,34 +13,40 @@
         <button type="submit">Search</button>
     </form>
 
+    <h2>Total Cart Value: $<span id="cartTotal">0</span></h2>
+
+    <form id="payForm" action="/checkout" method="POST" style="display:none;">
+        <input type="hidden" name="amount" id="cartAmount">
+        <button type="submit">Pay</button>
+    </form>
+
     <h2>Results:</h2>
     <ul>
-    {% for event in events %}
-    <li>
-        <a href="{{ event.url }}" target="_blank">{{ event.name }}</a><br>
-        <strong>Address:</strong> {{ event.address }}<br>
-        <strong>Description:</strong> {{ event.description }}<br>
-        {% if event.price %}
-        <strong>Price:</strong> {{ event.price }}
-        <button onclick="addToCart('{{ event.price }}')">+</button>
-        {% endif %}
-    </li>
-    {% endfor %}
-</ul>
+        {% for event in events %}
+        <li>
+            <a href="{{ event.url }}" target="_blank">{{ event.name }}</a><br>
+            <strong>Address:</strong> {{ event.address }}<br>
+            <strong>Description:</strong> {{ event.description }}<br>
+            {% if event.price %}
+                <strong>Price:</strong> {{ event.price }}
+                <button type="button" onclick="addToCart('{{ event.price }}')">+</button>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
 
-<script>
-    let total = 0;
+    <script>
+        let total = 0;
 
-    function addToCart(price) {
-        // Remove $ sign if it's there and convert to float
-        const numeric = parseFloat(price.replace("$", ""));
-        if (!isNaN(numeric)) {
-            total += numeric;
-            document.getElementById("cartTotal").textContent = total.toFixed(2);
+        function addToCart(price) {
+            const numeric = parseFloat(price.replace("$", ""));
+            if (!isNaN(numeric)) {
+                total += numeric;
+                document.getElementById("cartTotal").textContent = total.toFixed(2);
+                document.getElementById("cartAmount").value = total.toFixed(2);
+                document.getElementById("payForm").style.display = "block";
+            }
         }
-    }
-</script>
-
-
+    </script>
 </body>
 </html>

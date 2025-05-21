@@ -1,5 +1,10 @@
 from flask import Flask, render_template, request
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+import time
+
 import requests
 app = Flask(__name__)
 TICKET_MASTER_KEY = "L2AG2mYeA9cBK8By0GIvZ3lbEaqDSFlJ"
@@ -15,7 +20,6 @@ def get_ticketmaster_events(keyword, category, date, address):
         "city": address,
         "size": 5
     }
-
     response = requests.get(url, params=params)
 
     #some debugging rn
@@ -24,18 +28,19 @@ def get_ticketmaster_events(keyword, category, date, address):
     print("Status Code:", response.status_code)
     print("Response JSON:", response.json())
 
-
     data = response.json()
 
     events = []
-
-    if "_embedded" in data:
+    if "_embedded" in data and "events" in data["_embedded"]:
         for event in data["_embedded"]["events"]:
+            venue_name = event.get("_embedded", {}).get("venues", [{}])[0].get("name", "Unknown Venue")
+            description = event.get("info", "No description available.")
+
             events.append({
-                "name": event.get("name"),
-                "url": event.get("url"),
-                "address": event["_embedded"]["venues"][0]["name"],
-                "description": event.get("info", "No description available.")
+                "name": event.get("name", "Untitled Event"),
+                "url": event.get("url", "#"),
+                "address": venue_name,
+                "description": description
             })
 
     return events
@@ -87,39 +92,111 @@ def get_ticketmaster_events(keyword, category, date, address):
 
 
 #incercarea nr 2:)
+# def get_eventbrite_events(keyword):
+#     from bs4 import BeautifulSoup
+#     import re
+#
+#     url = f"https://www.eventbrite.com/d/online/{keyword.replace(' ', '-')}/"
+#     headers = {
+#         "User-Agent": "Mozilla/5.0"
+#     }
+#     response = requests.get(url, headers=headers)
+#     soup = BeautifulSoup(response.text, 'html.parser')
+#
+#     events = []
+#     cards = soup.select("div.eds-event-card-content__content")[:5]
+#
+#     for card in cards:
+#         try:
+#             title = card.select_one("div.eds-event-card-content__primary-content > a")
+#             location = card.select_one("div.card-text--truncated__one")
+#             price = card.find(string=re.compile(r"\$\d+"))
+#
+#             events.append({
+#                 "name": title.get_text(strip=True) if title else "Unknown Event",
+#                 "url": "https://www.eventbrite.com" + title['href'] if title and title.has_attr('href') else "#",
+#                 "address": location.get_text(strip=True) if location else "Online / Unknown",
+#                 "description": "Eventbrite event",
+#                 "price": price if price else "$15"  # fallback price
+#             })
+#         except Exception as e:
+#             continue
+#
+#     #debuug iar
+#     print("EVENTBRITE EVENT SAMPLE!!!!!", events)
+#     return events
+
+#incercarea nr 3, acum using selenium ca altfel nu merge
+# def get_eventbrite_events(keyword):
+#     options = Options()
+#     options.add_argument("--headless")  # browser runs in background
+#     options.add_argument("--disable-gpu")
+#     options.add_argument("--no-sandbox")
+#
+#     driver = webdriver.Chrome(options=options)  # make sure chromedriver is in the project folder
+#     url = f"https://www.eventbrite.com/d/online/{keyword.replace(' ', '-')}/"
+#     driver.get(url)
+#
+#     time.sleep(4)  # wait for JS to load
+#
+#     events = []
+#     # cards = driver.find_elements(By.CSS_SELECTOR, "div.eds-event-card-content__content")[:5]
+#     #we need a more general one maybe
+#     cards = driver.find_elements(By.CLASS_NAME, "search-event-card-wrapper")[:5]
+#
+#     for card in cards:
+#         try:
+#             title_elem = card.find_element(By.TAG_NAME, "h3")
+#             name = title_elem.text
+#             link_elem = card.find_element(By.TAG_NAME, "a")
+#             link = link_elem.get_attribute("href")
+#             price = "$15"
+#             address = "Online"
+#
+#             events.append({
+#                 "name": name,
+#                 "url": link,
+#                 "address": address,
+#                 "description": "Eventbrite event",
+#                 "price": price
+#             })
+#         except Exception:
+#             continue
+#
+#     driver.quit()
+#     print("EVENTBRITE EVENT SAMPLE:", events)
+#     return events
+
+
+
+#update cu eventuri hardcoded
 def get_eventbrite_events(keyword):
-    from bs4 import BeautifulSoup
-    import re
+    print("Using FAKE Eventbrite events...")
 
-    url = f"https://www.eventbrite.com/d/online/{keyword.replace(' ', '-')}/"
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, 'html.parser')
+    return [
+        {
+            "name": f"{keyword.title()} Virtual Workshop",
+            "url": "https://eventbrite.com/fake1",
+            "address": "Online / Zoom",
+            "description": "Eventbrite training session",
+            "price": "$10"
+        },
+        {
+            "name": f"{keyword.title()} Conference 2025",
+            "url": "https://eventbrite.com/fake2",
+            "address": "Online / Stream",
+            "description": "Live keynote + Q&A",
+            "price": "$15"
+        },
+        {
+            "name": f"Beginner {keyword.title()} Crash Course",
+            "url": "https://eventbrite.com/fake3",
+            "address": "Virtual Room",
+            "description": "Eventbrite event intro series",
+            "price": "$20"
+        }
+    ]
 
-    events = []
-    cards = soup.select("div.eds-event-card-content__content")[:5]
-
-    for card in cards:
-        try:
-            title = card.select_one("div.eds-event-card-content__primary-content > a")
-            location = card.select_one("div.card-text--truncated__one")
-            price = card.find(string=re.compile(r"\$\d+"))
-
-            events.append({
-                "name": title.get_text(strip=True) if title else "Unknown Event",
-                "url": "https://www.eventbrite.com" + title['href'] if title and title.has_attr('href') else "#",
-                "address": location.get_text(strip=True) if location else "Online / Unknown",
-                "description": "Eventbrite event",
-                "price": price if price else "$15"  # fallback price
-            })
-        except Exception as e:
-            continue
-
-    #debuug iar
-    print("EVENTBRITE EVENT SAMPLE!!!!!", events)
-    return events
 
 
 @app.route("/", methods = ["GET"])
